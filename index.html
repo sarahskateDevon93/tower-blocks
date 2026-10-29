@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tower Blocks 3D Infinite</title>
+  
+  <!-- Caricamento di Three.js e Cannon.js per grafica 3D e fisica -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- SFONDO DINAMICO -->
+  <div class="sky-bg"></div>
+
+  <!-- BENVENUTO E START GAME -->
+  <div id="start-screen" class="ui-layer">
+    <div class="game-title">TOWER BLOCKS</div>
+    <div class="tap-to-start">TAP TO BUILD</div>
+  </div>
+
+  <!-- INTERFACCIA ED ELEMENTI GUI -->
+  <div class="gui-overlay">
+    <button class="gui-btn" id="profileBtn" onclick="openModal('profileModal')">👤 Profile</button>
+    <button class="gui-btn" onclick="openModal('leaderboardModal')">🏆 Leaderboard</button>
+  </div>
+
+  <!-- PUNTEGGIO -->
+  <div id="score-display">0</div>
+
+  <!-- SCHERMATA GAME OVER -->
+  <div id="game-over-screen">
+    <h2>GAME OVER</h2>
+    <div id="final-score" style="font-size: 20px; margin-bottom: 20px;">Score: 0</div>
+    <button class="action-btn" onclick="restartGame()">PLAY AGAIN</button>
+  </div>
+
+  <!-- MODALE PROFILO -->
+  <div id="profileModal" class="gui-modal">
+    <div class="gui-modal-content">
+      <h3>Player Profile</h3>
+      <p style="font-size: 12px; color: #aaa; margin-bottom: 4px; text-align: left;">Nickname:</p>
+      <input type="text" id="userNickname" class="gui-input" placeholder="Type your nickname..." autocomplete="off">
+      
+      <p style="font-size: 13px; margin: 12px 0 6px 0; text-align: left;">Choose Avatar:</p>
+      <div class="avatar-grid">
+        <span class="avatar-item selected" onclick="selectAvatar('🤖', this)">🤖</span>
+        <span class="avatar-item" onclick="selectAvatar('👾', this)">👾</span>
+        <span class="avatar-item" onclick="selectAvatar('👑', this)">👑</span>
+        <span class="avatar-item" onclick="selectAvatar('🚀', this)">🚀</span>
+      </div>
+
+      <button class="action-btn" style="width:100%; margin-top:12px; background:#fff; color:#000;" onclick="saveProfile()">Save Profile</button>
+      <button class="action-btn" style="width:100%; margin-top:6px; background:#333;" onclick="closeModal('profileModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- MODALE CLASSIFICA -->
+  <div id="leaderboardModal" class="gui-modal">
+    <div class="gui-modal-content">
+      <h3>Leaderboard</h3>
+      <div id="leaderboardList" class="leaderboard-list"></div>
+      <button class="action-btn" style="width:100%; margin-top:15px; background:#333;" onclick="closeModal('leaderboardModal')">Close</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
