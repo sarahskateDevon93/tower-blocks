@@ -3,71 +3,226 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Tower Blocks 3D Infinite</title>
+  <title>Tower Blocks 3D</title>
   
-  <!-- CDN Stabili di Three.js e Cannon.js -->
+  <!-- CDN Stabili ed espliciti -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
   
-  <link rel="stylesheet" href="style.css">
-  
   <style>
-    /* Box per mostrare eventuali errori a schermo */
-    #error-debug {
-      position: fixed;
-      top: 10px; left: 10px; right: 10px;
-      background: rgba(255, 0, 0, 0.9);
-      color: white;
-      padding: 15px;
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #1a1a24;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .sky-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1e1e2f 0%, #0f0f17 100%);
+      z-index: -1;
+    }
+
+    .ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 15, 23, 0.85);
+      z-index: 10;
+      cursor: pointer;
+    }
+
+    .game-title {
+      font-size: 3rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      text-shadow: 0 4px 20px rgba(0, 150, 255, 0.4);
+    }
+
+    .tap-to-start {
+      font-size: 1.2rem;
+      color: #00ffcc;
+      font-weight: 600;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+
+    .gui-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 5;
+      display: flex;
+      gap: 10px;
+    }
+
+    .gui-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 8px 14px;
       border-radius: 8px;
-      font-family: monospace;
+      cursor: pointer;
       font-size: 14px;
-      z-index: 999999;
+      backdrop-filter: blur(5px);
+      transition: all 0.2s;
+    }
+
+    .gui-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    #score-display {
+      position: absolute;
+      top: 30px;
+      width: 100%;
+      text-align: center;
+      font-size: 4rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    #game-over-screen {
       display: none;
-      word-break: break-all;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(20, 20, 30, 0.95);
+      padding: 30px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      color: #fff;
+      z-index: 20;
+    }
+
+    .gui-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .gui-modal-content {
+      background: #1e1e2f;
+      padding: 25px;
+      border-radius: 12px;
+      width: 300px;
+      text-align: center;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .gui-input {
+      width: 100%;
+      padding: 10px;
+      background: #111;
+      border: 1px solid #444;
+      color: #fff;
+      border-radius: 6px;
+      margin-top: 5px;
+    }
+
+    .avatar-grid {
+      display: flex;
+      justify-content: space-around;
+      margin: 15px 0;
+    }
+
+    .avatar-item {
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .avatar-item.selected {
+      background: rgba(0,255,204,0.2);
+      border: 1px solid #00ffcc;
+    }
+
+    .action-btn {
+      background: #00ffcc;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .leaderboard-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
   </style>
 </head>
 <body>
 
-  <!-- DIV PER CATTURARE GLI ERRORI A SCHERMO -->
-  <div id="error-debug"></div>
-
-  <!-- SCRIPT DI EMERGENZA PER CATTURARE GLI ERRORI -->
-  <script>
-    window.onerror = function(msg, url, line) {
-      const errBox = document.getElementById('error-debug');
-      errBox.style.display = 'block';
-      errBox.innerHTML = `<strong>ERRORE JS:</strong> ${msg}<br><small>Linea: ${line}</small>`;
-    };
-  </script>
-
-  <!-- SFONDO DINAMICO -->
   <div class="sky-bg"></div>
 
-  <!-- BENVENUTO E START GAME -->
   <div id="start-screen" class="ui-layer">
     <div class="game-title">TOWER BLOCKS</div>
     <div class="tap-to-start">TAP TO BUILD</div>
   </div>
 
-  <!-- INTERFACCIA ED ELEMENTI GUI -->
   <div class="gui-overlay">
     <button class="gui-btn" id="profileBtn" onclick="openModal('profileModal')">👤 Profile</button>
     <button class="gui-btn" onclick="openModal('leaderboardModal')">🏆 Leaderboard</button>
   </div>
 
-  <!-- PUNTEGGIO -->
   <div id="score-display">0</div>
 
-  <!-- SCHERMATA GAME OVER -->
   <div id="game-over-screen">
     <h2>GAME OVER</h2>
     <div id="final-score" style="font-size: 20px; margin-bottom: 20px;">Score: 0</div>
     <button class="action-btn" onclick="restartGame()">PLAY AGAIN</button>
   </div>
 
-  <!-- MODALE PROFILO -->
   <div id="profileModal" class="gui-modal">
     <div class="gui-modal-content">
       <h3>Player Profile</h3>
@@ -87,7 +242,6 @@
     </div>
   </div>
 
-  <!-- MODALE CLASSIFICA -->
   <div id="leaderboardModal" class="gui-modal">
     <div class="gui-modal-content">
       <h3>Leaderboard</h3>
@@ -96,6 +250,343 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    // --- PROFILO & CLASSIFICA ---
+    let selectedAvatar = localStorage.getItem('tower_avatar') || '🤖';
+    let currentUser = {
+      nickname: localStorage.getItem('tower_nickname') || '',
+      avatar: selectedAvatar
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!currentUser.nickname) {
+        openModal('profileModal');
+      } else {
+        updateProfileUI();
+      }
+      updateLeaderboardUI();
+      initEngine();
+    });
+
+    function updateProfileUI() {
+      const btn = document.getElementById('profileBtn');
+      if (btn) {
+        btn.innerHTML = currentUser.nickname ? `${currentUser.avatar} ${currentUser.nickname}` : '👤 Profile';
+      }
+      const nickInput = document.getElementById('userNickname');
+      if (nickInput) nickInput.value = currentUser.nickname;
+      
+      document.querySelectorAll('.avatar-item').forEach(el => {
+        el.classList.toggle('selected', el.textContent === currentUser.avatar);
+      });
+    }
+
+    function openModal(id) {
+      if (id === 'profileModal') {
+        const nickInput = document.getElementById('userNickname');
+        if (nickInput) nickInput.value = currentUser.nickname;
+      }
+      const modal = document.getElementById(id);
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.style.display = 'none';
+    }
+
+    function selectAvatar(emoji, element) {
+      selectedAvatar = emoji;
+      document.querySelectorAll('.avatar-item').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+    }
+
+    function saveProfile() {
+      const nickInput = document.getElementById('userNickname');
+      const nick = nickInput ? nickInput.value.trim() : '';
+      if (!nick) {
+        alert('Please enter a valid nickname!');
+        return;
+      }
+      currentUser.nickname = nick;
+      currentUser.avatar = selectedAvatar;
+      localStorage.setItem('tower_nickname', nick);
+      localStorage.setItem('tower_avatar', selectedAvatar);
+      updateProfileUI();
+      closeModal('profileModal');
+    }
+
+    function saveScore(score) {
+      if (!currentUser.nickname || score <= 0) return;
+      let scores = JSON.parse(localStorage.getItem('tower_leaderboard') || '[]');
+      scores.push({ nickname: currentUser.nickname, avatar: currentUser.avatar, score: score });
+      scores.sort((a, b) => b.score - a.score);
+      scores = scores.slice(0, 10);
+      localStorage.setItem('tower_leaderboard', JSON.stringify(scores));
+      updateLeaderboardUI();
+    }
+
+    function updateLeaderboardUI() {
+      const listEl = document.getElementById('leaderboardList');
+      if (!listEl) return;
+      const scores = JSON.parse(localStorage.getItem('tower_leaderboard') || '[]');
+      if (scores.length === 0) {
+        listEl.innerHTML = '<p style="text-align:center; color:#666">No scores yet!</p>';
+        return;
+      }
+      listEl.innerHTML = scores.map(s => `
+        <div class="leaderboard-row">
+          <span>${s.avatar} ${s.nickname}</span>
+          <span><strong>${s.score} Pts</strong></span>
+        </div>
+      `).join('');
+    }
+
+    // --- SUONI SICURI (WEB AUDIO API) ---
+    let audioCtx = null;
+    function playSound(freq, duration = 0.15, type = 'sine') {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // --- MOTORE DI GIOCO 3D ---
+    let scene, camera, renderer, world;
+    let stack = [];
+    let overhangs = [];
+    const boxHeight = 0.6;
+    const originalSize = 3;
+    let gameState = 'START';
+    let score = 0;
+    let combo = 0;
+
+    function initEngine() {
+      scene = new THREE.Scene();
+
+      world = new CANNON.World();
+      world.gravity.set(0, -10, 0);
+
+      const aspect = window.innerWidth / window.innerHeight;
+      const d = 5;
+      camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 100);
+      camera.position.set(4, 5, 4);
+      camera.lookAt(0, 0, 0);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      dirLight.position.set(10, 20, 10);
+      scene.add(dirLight);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      document.body.appendChild(renderer.domElement);
+
+      window.addEventListener('resize', onWindowResize);
+      window.addEventListener('pointerdown', handleTap);
+
+      resetGame();
+      animate();
+    }
+
+    function getHueColor(index) {
+      return new THREE.Color(`hsl(${(index * 12) % 360}, 80%, 60%)`);
+    }
+
+    function addLayer(x, z, width, depth, direction) {
+      const y = stack.length * boxHeight;
+      const layer = createBox(x, y, z, width, depth, false, getHueColor(stack.length));
+      layer.direction = direction;
+      stack.push(layer);
+    }
+
+    function createBox(x, y, z, width, depth, falls, color) {
+      const geometry = new THREE.BoxGeometry(width, boxHeight, depth);
+      const material = new THREE.MeshLambertMaterial({ color });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(x, y, z);
+      scene.add(mesh);
+
+      let body = null;
+      if (falls) {
+        const shape = new CANNON.Box(new CANNON.Vec3(width / 2, boxHeight / 2, depth / 2));
+        body = new CANNON.Body({ mass: 5, shape });
+        body.position.set(x, y, z);
+        world.addBody(body);
+      }
+
+      return { mesh, body, width, depth };
+    }
+
+    function resetGame() {
+      stack.forEach(b => scene.remove(b.mesh));
+      overhangs.forEach(o => {
+        scene.remove(o.mesh);
+        if (o.body) world.remove(o.body);
+      });
+      stack = [];
+      overhangs = [];
+      score = 0;
+      combo = 0;
+
+      const scoreEl = document.getElementById('score-display');
+      if (scoreEl) scoreEl.innerText = '0';
+      
+      const startScreen = document.getElementById('start-screen');
+      if (startScreen) startScreen.style.display = 'flex';
+      
+      const gameOverScreen = document.getElementById('game-over-screen');
+      if (gameOverScreen) gameOverScreen.style.display = 'none';
+
+      addLayer(0, 0, originalSize, originalSize, 'x');
+      addLayer(-5, 0, originalSize, originalSize, 'x');
+
+      camera.position.set(4, 5, 4);
+      camera.lookAt(0, 0, 0);
+      gameState = 'START';
+    }
+
+    function handleTap(e) {
+      if (e.target.closest('.gui-overlay') || e.target.closest('.gui-modal') || e.target.closest('#game-over-screen')) {
+        return;
+      }
+
+      if (gameState === 'START') {
+        gameState = 'PLAYING';
+        const startScreen = document.getElementById('start-screen');
+        if (startScreen) startScreen.style.display = 'none';
+        return;
+      }
+
+      if (gameState === 'PLAYING') {
+        splitTopBlock();
+      }
+    }
+
+    function splitTopBlock() {
+      const topLayer = stack[stack.length - 1];
+      const prevLayer = stack[stack.length - 2];
+      const direction = topLayer.direction;
+
+      const delta = topLayer.mesh.position[direction] - prevLayer.mesh.position[direction];
+      const overhangSize = Math.abs(delta);
+      const size = direction === 'x' ? topLayer.width : topLayer.depth;
+      const overlap = size - overhangSize;
+
+      if (overlap > 0) {
+        let newWidth = topLayer.width;
+        let newDepth = topLayer.depth;
+
+        if (direction === 'x') newWidth = overlap;
+        else newDepth = overlap;
+
+        topLayer.width = newWidth;
+        topLayer.depth = newDepth;
+
+        if (overhangSize < 0.1) {
+          combo++;
+          topLayer.mesh.position[direction] = prevLayer.mesh.position[direction];
+          playSound(300 + combo * 50, 0.2);
+        } else {
+          combo = 0;
+          topLayer.mesh.position[direction] = prevLayer.mesh.position[direction] + delta / 2;
+
+          const overhangX = direction === 'x' ? topLayer.mesh.position.x + (delta > 0 ? overlap / 2 : -overlap / 2) : topLayer.mesh.position.x;
+          const overhangZ = direction === 'z' ? topLayer.mesh.position.z + (delta > 0 ? overlap / 2 : -overlap / 2) : topLayer.mesh.position.z;
+          const overhangW = direction === 'x' ? overhangSize : topLayer.width;
+          const overhangD = direction === 'z' ? overhangSize : topLayer.depth;
+
+          const fallingBox = createBox(overhangX, topLayer.mesh.position.y, overhangZ, overhangW, overhangD, true, topLayer.mesh.material.color);
+          overhangs.push(fallingBox);
+          playSound(180, 0.1, 'sawtooth');
+        }
+
+        topLayer.mesh.geometry.dispose();
+        topLayer.mesh.geometry = new THREE.BoxGeometry(topLayer.width, boxHeight, topLayer.depth);
+
+        score++;
+        const scoreEl = document.getElementById('score-display');
+        if (scoreEl) scoreEl.innerText = score;
+
+        camera.position.y += boxHeight;
+
+        const nextDirection = direction === 'x' ? 'z' : 'x';
+        const nextX = nextDirection === 'x' ? -5 : topLayer.mesh.position.x;
+        const nextZ = nextDirection === 'z' ? -5 : topLayer.mesh.position.z;
+
+        addLayer(nextX, nextZ, topLayer.width, topLayer.depth, nextDirection);
+
+      } else {
+        gameState = 'GAMEOVER';
+        topLayer.body = createBox(topLayer.mesh.position.x, topLayer.mesh.position.y, topLayer.mesh.position.z, topLayer.width, topLayer.depth, true, topLayer.mesh.material.color).body;
+        scene.remove(topLayer.mesh);
+        playSound(100, 0.4, 'square');
+
+        saveScore(score);
+        const finalScoreEl = document.getElementById('final-score');
+        if (finalScoreEl) finalScoreEl.innerText = `Score: ${score}`;
+        
+        const gameOverScreen = document.getElementById('game-over-screen');
+        if (gameOverScreen) gameOverScreen.style.display = 'block';
+      }
+    }
+
+    function restartGame() {
+      resetGame();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (gameState === 'PLAYING') {
+        const topLayer = stack[stack.length - 1];
+        const speed = 0.05 + Math.min(score * 0.0015, 0.04);
+        topLayer.mesh.position[topLayer.direction] += speed;
+
+        if (topLayer.mesh.position[topLayer.direction] > 5) {
+          topLayer.mesh.position[topLayer.direction] = -5;
+        }
+      }
+
+      world.step(1 / 60);
+      overhangs.forEach(o => {
+        if (o.body) {
+          o.mesh.position.copy(o.body.position);
+          o.mesh.quaternion.copy(o.body.quaternion);
+        }
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+      if (!camera || !renderer) return;
+      const aspect = window.innerWidth / window.innerHeight;
+      const d = 5;
+      camera.left = -d * aspect;
+      camera.right = d * aspect;
+      camera.top = d;
+      camera.bottom = -d;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+  </script>
 </body>
 </html>

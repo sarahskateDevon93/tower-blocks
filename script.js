@@ -110,7 +110,7 @@ function playSound(freq, duration = 0.15, type = 'sine') {
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
-    // Ignora errori audio se bloccato
+    // Ignora errori audio
   }
 }
 
@@ -249,83 +249,4 @@ function splitTopBlock() {
     topLayer.width = newWidth;
     topLayer.depth = newDepth;
 
-    if (overhangSize < 0.1) {
-      combo++;
-      topLayer.mesh.position[direction] = prevLayer.mesh.position[direction];
-      playSound(300 + combo * 50, 0.2);
-    } else {
-      combo = 0;
-      topLayer.mesh.position[direction] = prevLayer.mesh.position[direction] + delta / 2;
-
-      const overhangX = direction === 'x' ? topLayer.mesh.position.x + (delta > 0 ? overlap / 2 : -overlap / 2) : topLayer.mesh.position.x;
-      const overhangZ = direction === 'z' ? topLayer.mesh.position.z + (delta > 0 ? overlap / 2 : -overlap / 2) : topLayer.mesh.position.z;
-      const overhangW = direction === 'x' ? overhangSize : topLayer.width;
-      const overhangD = direction === 'z' ? overhangSize : topLayer.depth;
-
-      const fallingBox = createBox(overhangX, topLayer.mesh.position.y, overhangZ, overhangW, overhangD, true, topLayer.mesh.material.color);
-      overhangs.push(fallingBox);
-      playSound(180, 0.1, 'sawtooth');
-    }
-
-    topLayer.mesh.geometry.dispose();
-    topLayer.mesh.geometry = new THREE.BoxGeometry(topLayer.width, boxHeight, topLayer.depth);
-
-    score++;
-    const scoreEl = document.getElementById('score-display');
-    if (scoreEl) scoreEl.innerText = score;
-
-    camera.position.y += boxHeight;
-
-    const nextDirection = direction === 'x' ? 'z' : 'x';
-    const nextX = nextDirection === 'x' ? -5 : topLayer.mesh.position.x;
-    const nextZ = nextDirection === 'z' ? -5 : topLayer.mesh.position.z;
-
-    addLayer(nextX, nextZ, topLayer.width, topLayer.depth, nextDirection);
-
-  } else {
-    gameState = 'GAMEOVER';
-    topLayer.body = createBox(topLayer.mesh.position.x, topLayer.mesh.position.y, topLayer.mesh.position.z, topLayer.width, topLayer.depth, true, topLayer.mesh.material.color).body;
-    scene.remove(topLayer.mesh);
-    playSound(100, 0.4, 'square');
-
-    saveScore(score);
-    const finalScoreEl = document.getElementById('final-score');
-    if (finalScoreEl) finalScoreEl.innerText = `Score: ${score}`;
-    
-    const gameOverScreen = document.getElementById('game-over-screen');
-    if (gameOverScreen) gameOverScreen.style.display = 'block';
-  }
-}
-
-function restartGame() {
-  resetGame();
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  if (gameState === 'PLAYING') {
-    const topLayer = stack[stack.length - 1];
-    const speed = 0.05 + Math.min(score * 0.0015, 0.04);
-    topLayer.mesh.position[topLayer.direction] += speed;
-
-    if (topLayer.mesh.position[topLayer.direction] > 5) {
-      topLayer.mesh.position[topLayer.direction] = -5;
-    }
-  }
-
-  world.step(1 / 60);
-  overhangs.forEach(o => {
-    if (o.body) {
-      o.mesh.position.copy(o.body.position);
-      o.mesh.quaternion.copy(o.body.quaternion);
-    }
-  });
-
-  renderer.render(scene, camera);
-}
-
-function onWindowResize() {
-  const aspect = window.innerWidth / window.innerHeight;
-  const d = 5;
-  camera.left = -d
+    if (overhangSize < 0.
