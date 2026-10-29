@@ -17,12 +17,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function updateProfileUI() {
   const btn = document.getElementById('profileBtn');
-  if (currentUser.nickname) {
-    btn.innerHTML = `${currentUser.avatar} ${currentUser.nickname}`;
-  } else {
-    btn.innerHTML = `👤 Profile`;
+  if (btn) {
+    btn.innerHTML = currentUser.nickname ? `${currentUser.avatar} ${currentUser.nickname}` : '👤 Profile';
   }
-  document.getElementById('userNickname').value = currentUser.nickname;
+  const nickInput = document.getElementById('userNickname');
+  if (nickInput) nickInput.value = currentUser.nickname;
+  
   document.querySelectorAll('.avatar-item').forEach(el => {
     el.classList.toggle('selected', el.textContent === currentUser.avatar);
   });
@@ -30,13 +30,16 @@ function updateProfileUI() {
 
 function openModal(id) {
   if (id === 'profileModal') {
-    document.getElementById('userNickname').value = currentUser.nickname;
+    const nickInput = document.getElementById('userNickname');
+    if (nickInput) nickInput.value = currentUser.nickname;
   }
-  document.getElementById(id).style.display = 'flex';
+  const modal = document.getElementById(id);
+  if (modal) modal.style.display = 'flex';
 }
 
 function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
+  const modal = document.getElementById(id);
+  if (modal) modal.style.display = 'none';
 }
 
 function selectAvatar(emoji, element) {
@@ -46,7 +49,8 @@ function selectAvatar(emoji, element) {
 }
 
 function saveProfile() {
-  const nick = document.getElementById('userNickname').value.trim();
+  const nickInput = document.getElementById('userNickname');
+  const nick = nickInput ? nickInput.value.trim() : '';
   if (!nick) {
     alert('Please enter a valid nickname!');
     return;
@@ -71,6 +75,7 @@ function saveScore(score) {
 
 function updateLeaderboardUI() {
   const listEl = document.getElementById('leaderboardList');
+  if (!listEl) return;
   const scores = JSON.parse(localStorage.getItem('tower_leaderboard') || '[]');
   if (scores.length === 0) {
     listEl.innerHTML = '<p style="text-align:center; color:#666">No scores yet!</p>';
@@ -84,62 +89,65 @@ function updateLeaderboardUI() {
   `).join('');
 }
 
-// --- SUONI SINTETIZZATI CON WEB AUDIO API ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// --- SUONI SICURI (WEB AUDIO API) ---
+let audioCtx = null;
 function playSound(freq, duration = 0.15, type = 'sine') {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration);
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {
+    // Ignora errori audio se il browser blocca l'autoplay
+  }
 }
 
-// --- MOTORE DI GIOCO 3D (THREE.JS + CANNON.JS) ---
+// --- MOTORE DI GIOCO 3D ---
 let scene, camera, renderer, world;
 let stack = [];
 let overhangs = [];
 const boxHeight = 0.6;
 const originalSize = 3;
-let gameState = 'START'; // 'START', 'PLAYING', 'GAMEOVER'
+let gameState = 'START';
 let score = 0;
 let combo = 0;
 
 function initEngine() {
-  // Scena 3D
   scene = new THREE.Scene();
 
-  // Fisica
   world = new CANNON.World();
   world.gravity.set(0, -10, 0);
 
-  // Telecamera isometrica
   const aspect = window.innerWidth / window.innerHeight;
   const d = 5;
   camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 100);
   camera.position.set(4, 5, 4);
   camera.lookAt(0, 0, 0);
 
-  // Luci
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
   scene.add(ambientLight);
 
   const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
   dirLight.position.set(10, 20, 10);
   scene.add(dirLight);
 
-  // Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   document.body.appendChild(renderer.domElement);
 
-  // Event Listener Interazione
   window.addEventListener('resize', onWindowResize);
   window.addEventListener('pointerdown', handleTap);
 
@@ -165,7 +173,6 @@ function createBox(x, y, z, width, depth, falls, color) {
   mesh.position.set(x, y, z);
   scene.add(mesh);
 
-  // Fisica se cade
   let body = null;
   if (falls) {
     const shape = new CANNON.Box(new CANNON.Vec3(width / 2, boxHeight / 2, depth / 2));
@@ -178,7 +185,6 @@ function createBox(x, y, z, width, depth, falls, color) {
 }
 
 function resetGame() {
-  // Pulisci blocchi vecchi
   stack.forEach(b => scene.remove(b.mesh));
   overhangs.forEach(o => {
     scene.remove(o.mesh);
@@ -189,13 +195,16 @@ function resetGame() {
   score = 0;
   combo = 0;
 
-  document.getElementById('score-display').innerText = '0';
-  document.getElementById('start-screen').style.display = 'flex';
-  document.getElementById('game-over-screen').style.display = 'none';
+  const scoreEl = document.getElementById('score-display');
+  if (scoreEl) scoreEl.innerText = '0';
+  
+  const startScreen = document.getElementById('start-screen');
+  if (startScreen) startScreen.style.display = 'flex';
+  
+  const gameOverScreen = document.getElementById('game-over-screen');
+  if (gameOverScreen) gameOverScreen.style.display = 'none';
 
-  // Base fissa
   addLayer(0, 0, originalSize, originalSize, 'x');
-  // Primo blocco mobile
   addLayer(-5, 0, originalSize, originalSize, 'x');
 
   camera.position.set(4, 5, 4);
@@ -210,7 +219,8 @@ function handleTap(e) {
 
   if (gameState === 'START') {
     gameState = 'PLAYING';
-    document.getElementById('start-screen').style.display = 'none';
+    const startScreen = document.getElementById('start-screen');
+    if (startScreen) startScreen.style.display = 'none';
     return;
   }
 
@@ -230,7 +240,6 @@ function splitTopBlock() {
   const overlap = size - overhangSize;
 
   if (overlap > 0) {
-    // Taglio blocco
     let newWidth = topLayer.width;
     let newDepth = topLayer.depth;
 
@@ -240,7 +249,6 @@ function splitTopBlock() {
     topLayer.width = newWidth;
     topLayer.depth = newDepth;
 
-    // Perfetto incastro (Combo Bonus)
     if (overhangSize < 0.1) {
       combo++;
       topLayer.mesh.position[direction] = prevLayer.mesh.position[direction];
@@ -249,7 +257,6 @@ function splitTopBlock() {
       combo = 0;
       topLayer.mesh.position[direction] = prevLayer.mesh.position[direction] + delta / 2;
 
-      // Crea pezzo che cade
       const overhangX = direction === 'x' ? topLayer.mesh.position.x + (delta > 0 ? overlap / 2 : -overlap / 2) : topLayer.mesh.position.x;
       const overhangZ = direction === 'z' ? topLayer.mesh.position.z + (delta > 0 ? overlap / 2 : -overlap / 2) : topLayer.mesh.position.z;
       const overhangW = direction === 'x' ? overhangSize : topLayer.width;
@@ -260,18 +267,15 @@ function splitTopBlock() {
       playSound(180, 0.1, 'sawtooth');
     }
 
-    // Ridimensiona Mesh
     topLayer.mesh.geometry.dispose();
     topLayer.mesh.geometry = new THREE.BoxGeometry(topLayer.width, boxHeight, topLayer.depth);
 
-    // Punteggio
     score++;
-    document.getElementById('score-display').innerText = score;
+    const scoreEl = document.getElementById('score-display');
+    if (scoreEl) scoreEl.innerText = score;
 
-    // Sposta telecamera in alto
     camera.position.y += boxHeight;
 
-    // Nuovo blocco mobile
     const nextDirection = direction === 'x' ? 'z' : 'x';
     const nextX = nextDirection === 'x' ? -5 : topLayer.mesh.position.x;
     const nextZ = nextDirection === 'z' ? -5 : topLayer.mesh.position.z;
@@ -279,55 +283,11 @@ function splitTopBlock() {
     addLayer(nextX, nextZ, topLayer.width, topLayer.depth, nextDirection);
 
   } else {
-    // Game Over: Blocco Mancato
     gameState = 'GAMEOVER';
     topLayer.body = createBox(topLayer.mesh.position.x, topLayer.mesh.position.y, topLayer.mesh.position.z, topLayer.width, topLayer.depth, true, topLayer.mesh.material.color).body;
     scene.remove(topLayer.mesh);
     playSound(100, 0.4, 'square');
 
     saveScore(score);
-    document.getElementById('final-score').innerText = `Score: ${score}`;
-    document.getElementById('game-over-screen').style.display = 'block';
-  }
-}
-
-function restartGame() {
-  resetGame();
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  // Movimento Blocco Corrente
-  if (gameState === 'PLAYING') {
-    const topLayer = stack[stack.length - 1];
-    const speed = 0.05 + Math.min(score * 0.0015, 0.04);
-    topLayer.mesh.position[topLayer.direction] += speed;
-
-    if (topLayer.mesh.position[topLayer.direction] > 5) {
-      topLayer.mesh.position[topLayer.direction] = -5;
-    }
-  }
-
-  // Aggiorna Fisica Canne.js
-  world.step(1 / 60);
-  overhangs.forEach(o => {
-    if (o.body) {
-      o.mesh.position.copy(o.body.position);
-      o.mesh.quaternion.copy(o.body.quaternion);
-    }
-  });
-
-  renderer.render(scene, camera);
-}
-
-function onWindowResize() {
-  const aspect = window.innerWidth / window.innerHeight;
-  const d = 5;
-  camera.left = -d * aspect;
-  camera.right = d * aspect;
-  camera.top = d;
-  camera.bottom = -d;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
+    const finalScoreEl = document.getElementById('final-score');
+    if (finalScoreEl) finalScoreEl.innerText =
