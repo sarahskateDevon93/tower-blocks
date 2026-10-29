@@ -281,3 +281,51 @@ function splitTopBlock() {
     const nextZ = nextDirection === 'z' ? -5 : topLayer.mesh.position.z;
 
     addLayer(nextX, nextZ, topLayer.width, topLayer.depth, nextDirection);
+
+  } else {
+    gameState = 'GAMEOVER';
+    topLayer.body = createBox(topLayer.mesh.position.x, topLayer.mesh.position.y, topLayer.mesh.position.z, topLayer.width, topLayer.depth, true, topLayer.mesh.material.color).body;
+    scene.remove(topLayer.mesh);
+    playSound(100, 0.4, 'square');
+
+    saveScore(score);
+    const finalScoreEl = document.getElementById('final-score');
+    if (finalScoreEl) finalScoreEl.innerText = `Score: ${score}`;
+    
+    const gameOverScreen = document.getElementById('game-over-screen');
+    if (gameOverScreen) gameOverScreen.style.display = 'block';
+  }
+}
+
+function restartGame() {
+  resetGame();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  if (gameState === 'PLAYING') {
+    const topLayer = stack[stack.length - 1];
+    const speed = 0.05 + Math.min(score * 0.0015, 0.04);
+    topLayer.mesh.position[topLayer.direction] += speed;
+
+    if (topLayer.mesh.position[topLayer.direction] > 5) {
+      topLayer.mesh.position[topLayer.direction] = -5;
+    }
+  }
+
+  world.step(1 / 60);
+  overhangs.forEach(o => {
+    if (o.body) {
+      o.mesh.position.copy(o.body.position);
+      o.mesh.quaternion.copy(o.body.quaternion);
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+function onWindowResize() {
+  const aspect = window.innerWidth / window.innerHeight;
+  const d = 5;
+  camera.left = -d
