@@ -2,228 +2,188 @@
   box-sizing: border-box;
   user-select: none;
   -webkit-user-select: none;
-  margin: 0;
-  padding: 0;
 }
 
 body, html {
+  margin: 0;
+  padding: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background-color: #1a1a24;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #000;
 }
 
 canvas {
   display: block;
   width: 100vw;
-  height: 100vh;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
+  height: 100vw;
 }
 
-/* SFONDO ANIMATO */
 .sky-bg {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #1f1c2c, #928dab);
-  z-index: 0;
-  transition: background 1s ease;
+  background: linear-gradient(135deg, #1e1e2f 0%, #0f0f17 100%);
+  z-index: -1;
 }
 
-/* INTERFACCIA UTENTE OVERLAY */
-.gui-overlay {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-  display: flex;
-  gap: 10px;
-}
-
-.gui-btn {
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 18px;
-  border-radius: 25px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  transition: all 0.2s ease;
-}
-
-.gui-btn:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: #000;
-}
-
-#score-display {
-  position: fixed;
-  top: 5vh;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  font-size: 10vh;
-  font-weight: 200;
-  color: #ffffff;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  z-index: 10;
-  pointer-events: none;
-}
-
-#start-screen {
-  position: fixed;
+.ui-layer {
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  z-index: 20;
-  pointer-events: none;
+  justify-content: center;
+  background: rgba(15, 15, 23, 0.85);
+  z-index: 10;
+  cursor: pointer;
 }
 
 .game-title {
-  font-size: 6vh;
-  font-weight: 800;
+  font-size: 3rem;
+  font-weight: 900;
   color: #fff;
-  letter-spacing: 4px;
-  text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  margin-bottom: 20px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  text-shadow: 0 4px 20px rgba(0, 150, 255, 0.4);
 }
 
 .tap-to-start {
-  font-size: 2.5vh;
-  color: rgba(255,255,255,0.8);
-  letter-spacing: 2px;
+  font-size: 1.2rem;
+  color: #00ffcc;
+  font-weight: 600;
   animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.98); }
-  50% { opacity: 1; transform: scale(1.02); }
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
 }
 
-/* SCHERMATA GAME OVER */
+.gui-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+}
+
+.gui-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  backdrop-filter: blur(5px);
+  transition: all 0.2s;
+}
+
+.gui-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+#score-display {
+  position: absolute;
+  top: 30px;
+  width: 100%;
+  text-align: center;
+  font-size: 4rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  z-index: 2;
+}
+
 #game-over-screen {
-  position: fixed;
+  display: none;
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(15, 15, 25, 0.95);
+  background: rgba(20, 20, 30, 0.95);
+  padding: 30px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 40px;
-  border-radius: 20px;
   text-align: center;
   color: #fff;
-  z-index: 200;
-  display: none;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-  backdrop-filter: blur(10px);
+  z-index: 20;
 }
 
-#game-over-screen h2 {
-  font-size: 32px;
-  margin-bottom: 10px;
-  color: #ff4757;
-}
-
-.action-btn {
-  background: #ff4757;
-  color: #fff;
-  border: none;
-  padding: 12px 28px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-}
-
-.action-btn:hover {
-  transform: scale(1.05);
-  background: #ff6b81;
-}
-
-/* MODALI E PROFILO */
 .gui-modal {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 300;
-  display: none;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
   justify-content: center;
   align-items: center;
+  z-index: 100;
 }
 
 .gui-modal-content {
-  background: #181824;
-  border: 1px solid #2a2a3c;
-  padding: 30px;
-  border-radius: 20px;
-  width: 320px;
-  color: #fff;
+  background: #1e1e2f;
+  padding: 25px;
+  border-radius: 12px;
+  width: 300px;
   text-align: center;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .gui-input {
   width: 100%;
-  padding: 12px;
-  margin: 8px 0 12px 0;
-  border-radius: 10px;
-  border: 1px solid #333;
-  background: #222230;
+  padding: 10px;
+  background: #111;
+  border: 1px solid #444;
   color: #fff;
-  font-size: 16px;
-  outline: none;
+  border-radius: 6px;
+  margin-top: 5px;
 }
 
 .avatar-grid {
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin: 10px 0 18px 0;
+  justify-content: space-around;
+  margin: 15px 0;
 }
 
 .avatar-item {
-  font-size: 28px;
-  padding: 8px;
-  border: 2px solid transparent;
-  border-radius: 50%;
+  font-size: 24px;
   cursor: pointer;
-  transition: transform 0.2s;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
 }
-
-.avatar-item:hover { transform: scale(1.1); }
 
 .avatar-item.selected {
-  border-color: #ff4757;
-  background: rgba(255, 71, 87, 0.2);
+  background: rgba(0,255,204,0.2);
+  border: 1px solid #00ffcc;
 }
 
-.leaderboard-list {
-  max-height: 200px;
-  overflow-y: auto;
-  text-align: left;
-  margin: 15px 0;
+.action-btn {
+  background: #00ffcc;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .leaderboard-row {
   display: flex;
   justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid #2a2a3c;
-  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }

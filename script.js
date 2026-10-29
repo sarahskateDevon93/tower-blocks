@@ -110,7 +110,7 @@ function playSound(freq, duration = 0.15, type = 'sine') {
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
-    // Ignora errori audio se il browser blocca l'autoplay
+    // Ignora errori audio se bloccato
   }
 }
 
@@ -281,13 +281,3 @@ function splitTopBlock() {
     const nextZ = nextDirection === 'z' ? -5 : topLayer.mesh.position.z;
 
     addLayer(nextX, nextZ, topLayer.width, topLayer.depth, nextDirection);
-
-  } else {
-    gameState = 'GAMEOVER';
-    topLayer.body = createBox(topLayer.mesh.position.x, topLayer.mesh.position.y, topLayer.mesh.position.z, topLayer.width, topLayer.depth, true, topLayer.mesh.material.color).body;
-    scene.remove(topLayer.mesh);
-    playSound(100, 0.4, 'square');
-
-    saveScore(score);
-    const finalScoreEl = document.getElementById('final-score');
-    if (finalScoreEl) finalScoreEl.innerText =
